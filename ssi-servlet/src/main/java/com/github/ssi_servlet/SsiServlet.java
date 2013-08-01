@@ -14,13 +14,13 @@ import com.googlecode.htmlcompressor.compressor.HtmlCompressor;
 
 public class SsiServlet extends SSIServlet_JBossWeb {
 
-	public static final String INIT_PARAM_HTML_COMPRESSOR = "com.github.ssi_rest.servlet.HTML_COMPRESSOR";
-	public static final String INIT_PARAM_COMPRESS_CSS = "com.github.ssi_rest.servlet.COMPRESS_CSS";
-	public static final String INIT_PARAM_COMPRESS_JS = "com.github.ssi_rest.servlet.COMPRESS_JAVASCRIPT";
+	public static final String INIT_PARAM_HTML_COMPRESSOR = "com.github.ssi_servlet.HTML_COMPRESSOR";
+	public static final String INIT_PARAM_COMPRESS_CSS = "com.github.ssi_servlet.COMPRESS_CSS";
+	public static final String INIT_PARAM_COMPRESS_JS = "com.github.ssi_servlet.COMPRESS_JAVASCRIPT";
 
-	public static final String REQ_ATTR_INITIAL_REQUEST_STRING = "com.github.ssi_rest.servlet.INITIAL_REQUEST_STRING";
-	public static final String REQ_ATTR_I18N_LANG = "I18N_LANG";
-	public static final String REQ_ATTR_I18N_DIR = "I18N_DIR";
+	public static final String REQ_ATTR_INITIAL_REQUEST_STRING = "com.github.ssi_servlet.INITIAL_REQUEST_STRING";
+	public static final String REQ_ATTR_HTML_LANG = "HTML_LANG";
+	public static final String REQ_ATTR_HTML_DIR = "HTML_DIR";
 
 	public static final String HTML_COMMENT_BYPASS_COMPRESSING_HTML = "<!-- BYPASS_COMPRESSING_HTML -->";
 	public static final String HTML_COMMENT_BYPASS_COMPRESSING_CSS = "<!-- BYPASS_COMPRESSING_CSS -->";
@@ -125,9 +125,9 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 			userLocale = SsiServletUtils.DEFAULT_LOCALE;
 		}
 
-		req.setAttribute(REQ_ATTR_I18N_LANG,
+		req.setAttribute(REQ_ATTR_HTML_LANG,
 				SsiServletUtils.getCultureHTMLLangAttributeValue(userLocale));
-		req.setAttribute(REQ_ATTR_I18N_DIR,
+		req.setAttribute(REQ_ATTR_HTML_DIR,
 				SsiServletUtils.getLanguageHTMLDirAttributeValue(userLocale));
 	}
 
