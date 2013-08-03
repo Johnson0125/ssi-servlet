@@ -17,6 +17,7 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 	public static final String INIT_PARAM_HTML_COMPRESSOR = "com.github.ssi_servlet.HTML_COMPRESSOR";
 	public static final String INIT_PARAM_COMPRESS_CSS = "com.github.ssi_servlet.COMPRESS_CSS";
 	public static final String INIT_PARAM_COMPRESS_JS = "com.github.ssi_servlet.COMPRESS_JAVASCRIPT";
+	public static final String INIT_PARAM_UPDATE_HTML_LANG_DIR_PER_REQUEST = "com.github.ssi_servlet.UPDATE_HTML_LANG_DIR_PER_REQUEST";
 
 	public static final String REQ_ATTR_INITIAL_REQUEST_STRING = "com.github.ssi_servlet.INITIAL_REQUEST_STRING";
 	public static final String REQ_ATTR_HTML_LANG = "HTML_LANG";
@@ -31,6 +32,7 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 	private boolean htmlCompressor = false;
 	private boolean compressCSS = false;
 	private boolean compressJS = false;
+	private boolean updateHtmlLangDir = false;
 
 	@Override
 	public void init() throws ServletException {
@@ -41,30 +43,38 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 				.parseBoolean(getInitParameter(INIT_PARAM_COMPRESS_CSS));
 		compressJS = Boolean
 				.parseBoolean(getInitParameter(INIT_PARAM_COMPRESS_JS));
+		updateHtmlLangDir = Boolean
+				.parseBoolean(getInitParameter(INIT_PARAM_UPDATE_HTML_LANG_DIR_PER_REQUEST));
 
-		if (htmlCompressor) {
-			// For the HTML compressor, force buffered to be true
+		if (htmlCompressor || updateHtmlLangDir) {
+			// For the HTML compressor or update the HTML lang & dir per
+			// request, force buffered to be true
 			buffered = true;
 		}
 
 		if (debug > 0) {
-			log("SsiRestServlet.init() the HTML Compressor feature: "
+			log("SsiServlet.init() the HTML Compressor feature: "
 					+ ((htmlCompressor) ? "Has been enabled"
 							: "Was not enabled"));
 
 			if (htmlCompressor) {
-				log("SsiRestServlet.init() the CSS compressing with the HTML Compressor: "
+				log("SsiServlet.init() the CSS compressing with the HTML Compressor: "
 						+ ((compressCSS) ? "Has been enabled"
 								: "Was not enabled"));
-				log("SsiRestServlet.init() the JavaScript compressing with the HTML Compressor: "
+				log("SsiServlet.init() the JavaScript compressing with the HTML Compressor: "
 						+ ((compressJS) ? "Has been enabled"
 								: "Was not enabled"));
 			}
+
+			log("SsiServlet.init() the update HTML lang and dir per Request feature: "
+					+ ((updateHtmlLangDir) ? "Has been enabled"
+							: "Was not enabled"));
 		}
 	}
 
 	@Override
-	protected String processBuffered(HttpServletRequest req, String text) {
+	protected String processBuffered(final HttpServletRequest req,
+			final String text) {
 		String html = super.processBuffered(req, text);
 		Object initialReqStr = req
 				.getAttribute(REQ_ATTR_INITIAL_REQUEST_STRING);
@@ -91,8 +101,8 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 	}
 
 	@Override
-	protected void requestHandler(HttpServletRequest req,
-			HttpServletResponse res) throws IOException {
+	protected void requestHandler(final HttpServletRequest req,
+			final HttpServletResponse res) throws IOException {
 		boolean alreadyInProcessSSI = false;
 		Object ssi_flag = req.getAttribute(Globals.SSI_FLAG_ATTR);
 
@@ -107,17 +117,27 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 		super.requestHandler(req, res);
 	}
 
-	protected String processBufferedBeforeCompress(HttpServletRequest req,
-			String html) {
-		return html;
+	protected String processBufferedBeforeCompress(
+			final HttpServletRequest req, final String html) {
+		if (!updateHtmlLangDir) {
+			return html;
+		}
+
+		Locale userLocale = getUserLocale(req);
+
+		if (userLocale == null) {
+			userLocale = SsiServletUtils.DEFAULT_LOCALE;
+		}
+
+		return updateHtmlLangDirPerRequest(req, html, userLocale);
 	}
 
-	protected Locale getUserLocale(HttpServletRequest req) {
+	protected Locale getUserLocale(final HttpServletRequest req) {
 		return req.getLocale();
 	}
 
-	protected void requestHandlerInProcessSSI(HttpServletRequest req,
-			HttpServletResponse res) throws IOException {
+	protected void requestHandlerInProcessSSI(final HttpServletRequest req,
+			final HttpServletResponse res) throws IOException {
 		req.setAttribute(REQ_ATTR_INITIAL_REQUEST_STRING, req.toString());
 		Locale userLocale = getUserLocale(req);
 
@@ -182,6 +202,154 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 		}
 
 		return compHtml;
+	}
+
+	protected String updateHtmlLangDirPerRequest(final HttpServletRequest req,
+			final String html, final Locale userLocale) {
+		if (html == null) {
+			return null;
+		}
+
+		String htmlLang = SsiServletUtils
+				.getCultureHTMLLangAttributeValue(userLocale);
+		String htmlDir = SsiServletUtils
+				.getLanguageHTMLDirAttributeValue(userLocale);
+
+		if (debug > 0) {
+			log("Updating the HTML for the request '" + req.getServletPath()
+					+ "' ; lang=\"" + htmlLang + "\" ; dir=\"" + htmlDir + "\"");
+		}
+
+		StringBuilder updtHtml = new StringBuilder(html);
+		boolean langAttrInserted = false;
+		String langAttr = "\"" + htmlLang + "\"";
+		boolean dirAttrInserted = false;
+		String dirAttr = "\"" + htmlDir + "\"";
+		int htmlTagPos = updtHtml.indexOf("<html");
+		int htmlTagClosePos = -1;
+
+		if (htmlTagPos == -1) {
+			htmlTagPos = updtHtml.indexOf("<HTML");
+		}
+
+		if (htmlTagPos > -1) {
+			htmlTagClosePos = updtHtml.indexOf(">", htmlTagPos);
+		}
+
+		if ((htmlTagPos > -1) && (htmlTagClosePos > htmlTagPos)) {
+			int langAttrPos = updtHtml.indexOf(" lang=", htmlTagPos);
+
+			if (langAttrPos == -1) {
+				langAttrPos = updtHtml.indexOf(" LANG=", htmlTagPos);
+			}
+
+			if ((langAttrPos > -1) && (langAttrPos < htmlTagClosePos)) {
+				int spacePos = updtHtml.indexOf(" ", langAttrPos + 6);
+
+				if ((spacePos > -1) && (spacePos < htmlTagClosePos)) {
+					updtHtml.replace(langAttrPos + 6, spacePos, langAttr);
+				} else {
+					updtHtml.replace(langAttrPos + 6, htmlTagClosePos, langAttr);
+				}
+
+				htmlTagClosePos = updtHtml.indexOf(">", htmlTagPos);
+				langAttrInserted = true;
+			}
+
+			int dirAttrPos = updtHtml.indexOf(" dir=", htmlTagPos);
+
+			if (dirAttrPos == -1) {
+				dirAttrPos = updtHtml.indexOf(" DIR=", htmlTagPos);
+			}
+
+			if ((dirAttrPos > -1) && (dirAttrPos < htmlTagClosePos)) {
+				int spacePos = updtHtml.indexOf(" ", dirAttrPos + 5);
+
+				if ((spacePos > -1) && (spacePos < htmlTagClosePos)) {
+					updtHtml.replace(dirAttrPos + 5, spacePos, dirAttr);
+				} else {
+					updtHtml.replace(dirAttrPos + 5, htmlTagClosePos, dirAttr);
+				}
+
+				htmlTagClosePos = updtHtml.indexOf(">", htmlTagPos);
+				dirAttrInserted = true;
+			}
+		}
+
+		int bodyTagPos = updtHtml.indexOf("<body");
+		int bodyTagClosePos = -1;
+
+		if (bodyTagPos == -1) {
+			bodyTagPos = updtHtml.indexOf("<BODY");
+		}
+
+		if (bodyTagPos > -1) {
+			bodyTagClosePos = updtHtml.indexOf(">", bodyTagPos);
+		}
+
+		if ((bodyTagPos > -1) && (bodyTagClosePos > bodyTagPos)) {
+			if (!langAttrInserted) {
+				int langAttrPos = updtHtml.indexOf(" lang=", bodyTagPos);
+
+				if (langAttrPos == -1) {
+					langAttrPos = updtHtml.indexOf(" LANG=", bodyTagPos);
+				}
+
+				if ((langAttrPos > -1) && (langAttrPos < bodyTagClosePos)) {
+					int spacePos = updtHtml.indexOf(" ", langAttrPos + 6);
+
+					if ((spacePos > -1) && (spacePos < bodyTagClosePos)) {
+						updtHtml.replace(langAttrPos + 6, spacePos, langAttr);
+					} else {
+						updtHtml.replace(langAttrPos + 6, bodyTagClosePos,
+								langAttr);
+					}
+
+					bodyTagClosePos = updtHtml.indexOf(">", bodyTagPos);
+					langAttrInserted = true;
+				}
+			}
+
+			if (!dirAttrInserted) {
+				int dirAttrPos = updtHtml.indexOf(" dir=", bodyTagPos);
+
+				if (dirAttrPos == -1) {
+					dirAttrPos = updtHtml.indexOf(" DIR=", bodyTagPos);
+				}
+
+				if ((dirAttrPos > -1) && (dirAttrPos < bodyTagClosePos)) {
+					int spacePos = updtHtml.indexOf(" ", dirAttrPos + 5);
+
+					if ((spacePos > -1) && (spacePos < bodyTagClosePos)) {
+						updtHtml.replace(dirAttrPos + 5, spacePos, dirAttr);
+					} else {
+						updtHtml.replace(dirAttrPos + 5, bodyTagClosePos,
+								dirAttr);
+					}
+
+					bodyTagClosePos = updtHtml.indexOf(">", bodyTagPos);
+					dirAttrInserted = true;
+				}
+			}
+		}
+
+		if (!langAttrInserted) {
+			if (htmlTagPos > -1) {
+				updtHtml.insert(htmlTagPos + 5, " lang=" + langAttr);
+			} else if (bodyTagPos > -1) {
+				updtHtml.insert(bodyTagPos + 5, " lang=" + langAttr);
+			}
+		}
+
+		if (!dirAttrInserted) {
+			if (htmlTagPos > -1) {
+				updtHtml.insert(htmlTagPos + 5, " dir=" + dirAttr);
+			} else if (bodyTagPos > -1) {
+				updtHtml.insert(bodyTagPos + 5, " dir=" + dirAttr);
+			}
+		}
+
+		return updtHtml.toString();
 	}
 
 }
