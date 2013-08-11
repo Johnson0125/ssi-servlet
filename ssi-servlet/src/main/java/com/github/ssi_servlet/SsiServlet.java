@@ -53,20 +53,28 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 		}
 
 		if (debug > 0) {
-			log("SsiServlet.init() the HTML Compressor feature: "
+			log("SsiServlet.init() - ["
+					+ getServletContext().getContextPath()
+					+ "] - the HTML Compressor feature: "
 					+ ((htmlCompressor) ? "Has been enabled"
 							: "Was not enabled"));
 
 			if (htmlCompressor) {
-				log("SsiServlet.init() the CSS compressing with the HTML Compressor: "
+				log("SsiServlet.init() - ["
+						+ getServletContext().getContextPath()
+						+ "] - the CSS compressing with the HTML Compressor: "
 						+ ((compressCSS) ? "Has been enabled"
 								: "Was not enabled"));
-				log("SsiServlet.init() the JavaScript compressing with the HTML Compressor: "
+				log("SsiServlet.init() - ["
+						+ getServletContext().getContextPath()
+						+ "] - the JavaScript compressing with the HTML Compressor: "
 						+ ((compressJS) ? "Has been enabled"
 								: "Was not enabled"));
 			}
 
-			log("SsiServlet.init() the update HTML lang and dir per Request feature: "
+			log("SsiServlet.init() - ["
+					+ getServletContext().getContextPath()
+					+ "] - the update HTML lang and dir per Request feature: "
 					+ ((updateHtmlLangDir) ? "Has been enabled"
 							: "Was not enabled"));
 		}
