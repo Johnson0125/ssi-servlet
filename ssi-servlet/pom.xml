@@ -26,6 +26,13 @@
       <scope>compile</scope>
     </dependency>
 	</dependencies>
+	<distributionManagement>
+    <repository>
+      <id>internal.repo</id>
+      <name>Internal Repository</name>
+      <url>file://C:/dev/git/mvn-repo</url>
+    </repository>
+  </distributionManagement>
 	<build>
 		<plugins>
 			<plugin>
