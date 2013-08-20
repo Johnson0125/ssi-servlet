@@ -14,12 +14,14 @@ import com.googlecode.htmlcompressor.compressor.HtmlCompressor;
 
 public class SsiServlet extends SSIServlet_JBossWeb {
 
+	public static final String INIT_PARAM_PRODUCTION_MODE = "com.github.ssi_servlet.PRODUCTION_MODE";
 	public static final String INIT_PARAM_HTML_COMPRESSOR = "com.github.ssi_servlet.HTML_COMPRESSOR";
 	public static final String INIT_PARAM_COMPRESS_CSS = "com.github.ssi_servlet.COMPRESS_CSS";
 	public static final String INIT_PARAM_COMPRESS_JS = "com.github.ssi_servlet.COMPRESS_JAVASCRIPT";
 	public static final String INIT_PARAM_UPDATE_HTML_LANG_DIR_PER_REQUEST = "com.github.ssi_servlet.UPDATE_HTML_LANG_DIR_PER_REQUEST";
 
 	public static final String REQ_ATTR_INITIAL_REQUEST_STRING = "com.github.ssi_servlet.INITIAL_REQUEST_STRING";
+	public static final String REQ_ATTR_PRODUCTION_MODE = "PRODUCTION_MODE";
 	public static final String REQ_ATTR_HTML_LANG = "HTML_LANG";
 	public static final String REQ_ATTR_HTML_DIR = "HTML_DIR";
 
@@ -29,6 +31,7 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 
 	private static final long serialVersionUID = 7557205809972862863L;
 
+	private boolean productionMode = false;
 	private boolean htmlCompressor = false;
 	private boolean compressCSS = false;
 	private boolean compressJS = false;
@@ -37,6 +40,8 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 	@Override
 	public void init() throws ServletException {
 		super.init();
+		productionMode = Boolean
+				.parseBoolean(getInitParameter(INIT_PARAM_PRODUCTION_MODE));
 		htmlCompressor = Boolean
 				.parseBoolean(getInitParameter(INIT_PARAM_HTML_COMPRESSOR));
 		compressCSS = Boolean
@@ -53,6 +58,8 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 		}
 
 		if (debug > 0) {
+			log("SsiServlet.init() - [" + getServletContext().getContextPath()
+					+ "] - running in Production Mode: " + productionMode);
 			log("SsiServlet.init() - ["
 					+ getServletContext().getContextPath()
 					+ "] - the HTML Compressor feature: "
@@ -147,6 +154,7 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 	protected void requestHandlerInProcessSSI(final HttpServletRequest req,
 			final HttpServletResponse res) throws IOException {
 		req.setAttribute(REQ_ATTR_INITIAL_REQUEST_STRING, req.toString());
+		req.setAttribute(REQ_ATTR_PRODUCTION_MODE, productionMode);
 		Locale userLocale = getUserLocale(req);
 
 		if (userLocale == null) {
