@@ -174,6 +174,38 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 		}
 
 		HtmlCompressor compressor = new HtmlCompressor();
+		// if false keeps HTML comments (default is true)
+		compressor.setRemoveComments(false);
+		// if false keeps multiple whitespace characters (default is true)
+		compressor.setRemoveMultiSpaces(false);
+		// removes iter-tag whitespace characters (default is true)
+		compressor.setRemoveIntertagSpaces(false);
+		// removes unnecessary tag attribute quotes (default is true)
+		compressor.setRemoveQuotes(false);
+		// simplify existing doctype (default is true)
+		compressor.setSimpleDoctype(false);
+		// remove optional attributes from script tags (default is true)
+		compressor.setRemoveScriptAttributes(false);
+		// remove optional attributes from style tags (default is true)
+		compressor.setRemoveStyleAttributes(false);
+		// remove optional attributes from link tags (default is true)
+		compressor.setRemoveLinkAttributes(false);
+		// remove optional attributes from form tags (default is true)
+		compressor.setRemoveFormAttributes(false);
+		// remove optional attributes from input tags (default is true)
+		compressor.setRemoveInputAttributes(false);
+		// remove values from boolean tag attributes (default is true)
+		compressor.setSimpleBooleanAttributes(false);
+		// remove "javascript:" from inline event handlers (default is true)
+		compressor.setRemoveJavaScriptProtocol(false);
+		// replace "http://" with "//" inside tag attributes (default is true)
+		compressor.setRemoveHttpProtocol(false);
+		// replace "https://" with "//" inside tag attributes (default is true)
+		compressor.setRemoveHttpsProtocol(false);
+		// preserves original line breaks (default is true)
+		compressor.setPreserveLineBreaks(true);
+		// remove spaces around provided tags (default is "br,p")
+		compressor.setRemoveSurroundingSpaces("");
 		int bypassCSS = html.indexOf(HTML_COMMENT_BYPASS_COMPRESSING_CSS);
 
 		if (compressCSS && (bypassCSS == -1)) {
