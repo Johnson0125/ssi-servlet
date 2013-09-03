@@ -351,6 +351,25 @@ public class ExpressionParseTree {
         protected int compareBranches() {
             String val1 = ((StringNode)left).getValue();
             String val2 = ((StringNode)right).getValue();
+            Float float1 = null;
+            if (val1.matches("[-+]?\\d*\\.?\\d+")) {
+                try {
+    				float1 = Float.parseFloat(val1);
+    			} catch (NumberFormatException e) {
+    				float1 = null;
+    			}
+            }
+            Float float2 = null;
+            if (val2.matches("[-+]?\\d*\\.?\\d+")) {
+                try {
+    				float2 = Float.parseFloat(val2);
+    			} catch (NumberFormatException e) {
+    				float2 = null;
+    			}
+            }
+            if ((float1 != null) && (float2 != null)) {
+                return float1.compareTo(float2);
+            }
             return val1.compareTo(val2);
         }
     }
