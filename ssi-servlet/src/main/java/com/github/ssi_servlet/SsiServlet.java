@@ -57,6 +57,11 @@ public class SsiServlet extends SSIServlet_JBossWeb {
 			buffered = true;
 		}
 
+		if (updateHtmlLangDir) {
+			// For the update the HTML lang & dir per request, force expires to be 0 seconds
+			expires = 0l;
+		}
+
 		if (debug > 0) {
 			log("SsiServlet.init() - [" + getServletContext().getContextPath()
 					+ "] - running in Production Mode: " + productionMode);
