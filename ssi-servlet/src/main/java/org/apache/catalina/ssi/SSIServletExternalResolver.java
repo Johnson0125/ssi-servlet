@@ -27,13 +27,19 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-// ssi-rest - erg - removed, should never be referenced
+
+
+
+
+
+// ssi-servlet - erg - removed, should never be referenced
 //import org.apache.catalina.connector.Request;
 import org.apache.coyote.Constants;
 
@@ -244,7 +250,7 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
                         String queryStringEncoding =
                             Constants.DEFAULT_CHARACTER_ENCODING;
 
-                     // ssi-rest - erg - removed, should never be referenced
+                     // ssi-servlet - erg - removed, should never be referenced
 //                        String uriEncoding = null;
 //                        boolean useBodyEncodingForURI = false;
 
@@ -260,7 +266,7 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
 //                        }
 
                         // If valid, apply settings from request / connector
-                     // ssi-rest - erg - removed, should never be referenced
+                     // ssi-servlet - erg - removed, should never be referenced
 //                        if (uriEncoding != null) {
 //                            queryStringEncoding = uriEncoding;
 //                        } else if(useBodyEncodingForURI) {
@@ -512,13 +518,27 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
     //We are making lots of unnecessary copies of the included data here. If
     //someone ever complains that this is slow, we should connect the included
     // stream to the print writer that SSICommand uses.
-    public String getFileText(String originalPath, boolean virtual)
+    @SuppressWarnings("unchecked")
+	public String getFileText(String originalPath, boolean virtual)
             throws IOException {
         try {
             ServletContextAndPath csAndP = getServletContextAndPath(
                     originalPath, virtual);
             ServletContext context = csAndP.getServletContext();
             String path = csAndP.getPath();
+            // ssi-servlet - erg - added the following to improve performance
+            Object attrbObj = null;
+            if (context != null) {
+                attrbObj = context.getAttribute(
+        				SSIServlet_JBossWeb.INIT_PARAM_FILE_TEXT_CACHING);
+            }
+            if (attrbObj instanceof ConcurrentHashMap) {
+            	Object fileTextObj = ((ConcurrentHashMap<?, ?>) attrbObj).get(path);
+            	if (fileTextObj instanceof String) {
+            		return (String) fileTextObj;
+            	}
+    		}
+            // ssi-servlet - erg - added the previous to improve performance
             RequestDispatcher rd = context.getRequestDispatcher(path);
             if (rd == null) {
                 throw new IOException(
@@ -541,14 +561,21 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
                 retVal = new String (bytes, inputEncoding);
             }
 
-            //make an assumption that an empty response is a failure. This is
-            // a problem
-            // if a truly empty file
-            //were included, but not sure how else to tell.
+            //make an assumption that an empty response is a failure.
+            // This is a problem if a truly empty file were included,
+            // but not sure how else to tell.
             if (retVal.equals("") && !req.getMethod().equalsIgnoreCase(
                     org.apache.coyote.http11.Constants.HEAD)) {
                 throw new IOException("Couldn't find file: " + path);
             }
+            // ssi-servlet - erg - added the following to improve performance
+            if (attrbObj instanceof ConcurrentHashMap) {
+            	try {
+					((ConcurrentHashMap<String, String>) attrbObj).put(path, retVal);
+				} catch (Exception e) {
+				}
+    		}
+            // ssi-servlet - erg - added the previous to improve performance
             return retVal;
         } catch (ServletException e) {
             throw new IOException("Couldn't include file: " + originalPath

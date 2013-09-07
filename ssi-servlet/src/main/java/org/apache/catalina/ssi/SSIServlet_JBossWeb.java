@@ -44,7 +44,7 @@ import org.apache.catalina.Globals;
  * @version $Id: SSIServlet.java 1534 2010-08-18 12:40:08Z remy.maucherat@jboss.com $
  */
 public class SSIServlet_JBossWeb  extends HttpServlet {
-    /** Debug level for this servlet. */
+	/** Debug level for this servlet. */
     protected int debug = 0;
     /** Should the output be buffered. */
     protected boolean buffered = false;
@@ -58,6 +58,11 @@ public class SSIServlet_JBossWeb  extends HttpServlet {
     protected String outputEncoding = "UTF-8";
     /** Allow exec (normally blocked for security) */
     protected boolean allowExec = false;
+    // ssi-servlet - erg - added the following to improve performance
+    /** Allow caching of includes file text */
+    protected boolean fileTextCaching = false;
+    public static final String INIT_PARAM_FILE_TEXT_CACHING = "fileTextCaching";
+	private static final long serialVersionUID = 2322884744371655871L;
 
 
     //----------------- Public methods.
@@ -88,6 +93,10 @@ public class SSIServlet_JBossWeb  extends HttpServlet {
 
         allowExec = Boolean.parseBoolean(
                 getServletConfig().getInitParameter("allowExec"));
+
+        // ssi-servlet - erg - added the following to improve performance
+        fileTextCaching = Boolean.parseBoolean(
+                getServletConfig().getInitParameter(INIT_PARAM_FILE_TEXT_CACHING));
 
         if (debug > 0)
             log("SSIServlet.init() SSI invoker started with 'debug'=" + debug);
