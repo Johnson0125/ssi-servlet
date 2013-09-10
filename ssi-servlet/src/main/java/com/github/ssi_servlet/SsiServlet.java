@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.catalina.Globals;
 import org.apache.catalina.ssi.SSIServlet_JBossWeb;
 
+import com.github.ssi_servlet.util.SsiServletUtils;
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor;
 
 public class SsiServlet extends SSIServlet_JBossWeb {

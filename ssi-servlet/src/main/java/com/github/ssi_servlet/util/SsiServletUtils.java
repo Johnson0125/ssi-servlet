@@ -1,4 +1,4 @@
-package com.github.ssi_servlet;
+package com.github.ssi_servlet.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +23,10 @@ public class SsiServletUtils {
 		RTL_LANGUAGES.add("syr");
 		RTL_LANGUAGES.add("ug");
 		RTL_LANGUAGES.add("ur");
+	}
+
+	protected SsiServletUtils() {
+		super();
 	}
 
 	public static boolean isRightToLeftLanguage(String language) {
